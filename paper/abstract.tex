@@ -1,0 +1,22 @@
+\begin{abstract}
+    When modeling interactions between individuals in a network, probabilistic generative models often assume that 
+    any interaction could in principle exist. If an interaction is not observed, 
+    this is attributed to the fact that the chosen mechanism for tie formation is not occuring. 
+    For instance, two nodes may not have a high affinity. 
+    However, these models ignore the possibility that nodes may not have been exposed to each other.
+    That prevents them from interacting in the first place, regardless the mechanism of tie formation.
+    In particular, such approaches fail to capture situations where individuals may indeed be compatible and thus interact, 
+    if they were exposed to each other.
+    
+    While this problem is known in recommender systems, it has only recently been investigated in network models. 
+    This study has been limited to static networks, where interactions do not evolve in time. 
+    As many real-world networks are constantly changing, interactions and exposure between nodes need to be modeled 
+    within the framework of temporal networks. Here, we introduce two approaches that tackle this problem by extending
+    the concept of exposure to a dynamical setting. They both rely on a Bayesian probabilistic approach that considers 
+    community structure as the main underlying mechanism for tie formation. 
+  
+    By properly modeling how exposure between nodes changes in time, we obtain strong community reconstruction results
+    for both synthetic and real data of recorded proximity interactions between individuals. 
+    On the latter, we additionally observe a significant improvement in terms of reconstructing unobserved interactions 
+    compared to a standard model that does not take exposure into account.
+\end{abstract}

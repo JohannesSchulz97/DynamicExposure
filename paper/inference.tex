@@ -1,0 +1,170 @@
+\section{Inference}
+
+
+We infer the optimal latent variables using \textit{Maximum A Posteriori Estimation} (\textbf{MAP}), 
+as we have prior information on \textbf{Z} that we can use. 
+\begin{equation}
+     \theta^* = \argmax_{\theta} p(\theta \mid A) = \argmax_{\theta} \log \sum_Z p(Z,\theta \mid A)\quad.
+\end{equation}
+As the logarithm of a sum is hard to derive, we use Jensens inequality to approximate it: 
+\begin{equation} \label{loss_function}
+    \begin{aligned} 
+        \log \sum_Z p(Z,\theta \mid A) \geq \sum_Z q(Z) \log \frac{p(Z,\theta \mid A)}{q(Z)}\coloneqq \lossfunction \quad.
+    \end{aligned}
+\end{equation}
+Here $q(\textbf{Z})$ is any distribution satisfying $\sum_{\textbf{Z}} q(\textbf{Z}) = 1$. \\
+However, exact equality is reached for 
+\begin{equation} \label{posterior_z}
+    q(\textbf{Z}) = \frac{p(\textbf{Z}, \theta \mid \textbf{A})}{\sum_{\textbf{Z}}p(\textbf{Z}, \theta \mid \textbf{A})}\quad,
+\end{equation} 
+which is the posterior on \textbf{Z}.
+Now we apply \textbf{EM} by iterating between 
+updating $q(\textbf{Z})$ according to equation \ref{posterior_z} and updating $\theta$ and $\mu$. 
+\begin{comment}
+The lossfunction (\ref{loss_function}) consist of a sum, where each summand depends only on certain parts of the whole set of parameters.
+If we assume a uniform prior on $\theta$, we can rewrite it in the following way: 
+\be
+    \begin{aligned}
+        \lossfunction &= \sum_Z q(Z) \log \frac{p(Z,\theta \mid A)}{q(Z)}   \\
+                      & = \sum_{Z} q(Z) \log \left( \frac{1}{q(Z)} \right) \hspace{2cm}                    \text{\textcolor{gray}{Entropy of Q}}                           \\
+                      & \hspace{.5cm} + \sum_{Z} q(Z) \log p(Z) \hspace{2.3cm}                \text{\textcolor{gray}{constant w.r.t. $\theta$}}               \\ 
+                      & \hspace{.5cm} + \sum_{Z} q(Z) \log p(A \mid Z, \theta) \hspace{1.4cm} \text{\textcolor{gray}{constant w.r.t. $\mu$}}\quad.
+    \end{aligned}
+\ee
+\end{comment}
+
+To obtain the parameter updates, we compute the derivative of $\lossfunction$ \textit{w.r.t.} $\theta$ and $\mu$ and set it to 
+zero (\ref{deriv}), resulting in the following update equations: 
+
+
+\subsection{Updating $\theta$}
+
+$\lossfunction$ simplifies, as we only care about the parts which depend on $\theta$:
+\be
+    \begin{aligned}
+        \lossfunction & \propto \sum_{\textbf{Z}} q(\textbf{Z}) \log p(A \mid Z, \theta) \\
+                      & = \sum_{\textbf{Z}} q(\textbf{Z}) \log \left( \prod_t \prod_{i,j} \delta(\Aijt)^{1-\Zijt} Pois(\Aijt; \lambdaij)^{\Zijt}         \right) \\
+                      & \propto  \sum_{i,j} \sum_t \sum_{\textbf{Z}} q(\textbf{Z}) \Zijt \log(Pois(\Aijt; \lambdaij)) \\
+                      & \overset{\left( \ref{deriv:marginalization} \right)}{=} \sum_{i,j} \sum_t \Qijt \left( \Aijt \log(\lambdaij) - \lambdaij  \right) \quad.
+    \end{aligned}
+\ee
+Now, we can take the derivative of the simplified $\lossfunction$ and set it to zero to obtain the updates on $\theta$.
+As $\log \lambdaij$ is difficult to derive, we use Jensens inequality \cite{mcshane1937jensen} to estimate it. 
+\begin{equation} \label{met:em_loglam}
+    \begin{aligned}
+        \log(\lambdaij) &= \log \left( \sum_{k,q} u_{i,k} v_{j,q} w_{k,q} \right) 
+                        \geq \sum_{k,q} \rho_{ijkq} \log \left( \frac{u_{i,k} v_{j,q} w_{k,q}}{\rho_{ijkq}} \right)\quad.
+    \end{aligned}
+\end{equation}
+For 
+\begin{equation} \label{rho}
+    \rho_{ijkq} = \frac{u_{i,k} v_{j,q} w_{k,q}}{\sum_{k,q} u_{i,k} v_{j,q} w_{k,q}}\quad,
+\end{equation} 
+exact equality is reached. \\
+Now, we apply \textbf{EM} a second time by iterating between 
+updating $\rho_{ijkq}$ according to equation \ref{rho} and updating $\theta$.
+
+
+We show the derivations for $u_{m,n}$.
+However, $v_{m,n}$ and $w_{m,n}$ can be obtained in a similar way:
+\be \label{update_u}
+    \begin{aligned}
+        \frac{\partial}{\partial u_{m,n}} \lossfunction &= \sum_{i,j} \sum_t \Qijt \left( \Aijt \frac{\partial}{\partial u_{m,n}}\log(\lambdaij) - \frac{\partial}{\partial u_{m,n}}\lambdaij  \right) \\
+             & = \sum_{j,t}  Q_{m,j}^{(t)} \left( A_{m,j}^{(t)} \frac{\sum_q \rho_{mjnq}}{u_{mn}} - \sum_q v_{jq} w_{nq}  \right) \mbeq 0 \\
+             & \Leftrightarrow u_{m,n} = \frac{\sum_j \sum_q \rho_{mjnq} \sum_t Q_{m,j}^{(t)}  A_{mj}^{(t)}}{\sum_j \sum_q v_{jq} w_{nq} \sum_t Q_{m,j}^{(t)}}\quad,
+    \end{aligned}
+\ee
+\begin{equation} \label{update_v}
+    v_{m,n} = \frac{\sum_i \sum_k \rho_{imkn} \sum_t Q_{i,m}^{(t)} A_{im}^{(t)}}
+                   {\sum_i \sum_k u_{ik} w_{kn} \sum_t Q_{i,m}^{(t)}}\quad,
+\end{equation}
+\begin{equation} \label{update_w}
+    w_{m,n} =\frac{\sum_{ij} \rho_{ijmn} \sum_t Q_{i,j}^{(t)}t A_{ij}^{(t)}}
+                  {\sum_{ij} u_{im} v_{jn} \sum_t Q_{i,j}^{(t)} }\quad.
+\end{equation}
+
+\subsection{Updating $\mu$}
+\be 
+    \begin{aligned}
+        \lossfunction & \propto \sum_{\textbf{Z}} q(\textbf{Z}) \log p(Z) \\
+                      & = \sum_{\textbf{Z}} q(\textbf{Z}) \sum_t \sum_{i<j} \Zijt \log(\mu_{ij}) + (1-\Zijt)\log(1-\mu_{ij}) \\
+                      & = \sum_{i<j} \log(\mu_{ij}) \left( \sum_t \Qijt \right) +  \log(1-\mu_{ij}) \left( T - \sum_t \Qijt \right)\quad.
+    \end{aligned}
+\ee
+
+Again, the parameter updates on $\mu$ can be obtained by computing the derivative with respect to $\mu$ and setting it to zero: 
+\be \label{update_mu}
+    \begin{aligned}
+        \frac{\partial}{\partial \mu_{k,l}} \lossfunction &= \sum_{i<j} \left( \sum_t \Qijt \right) \frac{\delta_{k,i} \mu_{j,l} + \delta_{k,j}\mu_{i,l}}{\mu_i^T\mu_j} \\ 
+                     & \hspace{1.5cm} -\left( T - \sum_t \Qijt \right)  \frac{\delta_{k,i} \mu_{j,l} + \delta_{k,j}\mu_{i,l}}{1-\mu_i^T\mu_j} \\
+                     & = \sum_{i\neq k} \mu_{il} \left(\frac{\sum_t Q_{i,k}^{(t)}}{\mu_{ik}} - \frac{T- \sum_t Q_{i,k}^{(t)}}{1 - \mu_{ik}}\right) \mbeq 0\quad.
+    \end{aligned}
+\ee
+
+\subsection{Updating $\Qijt$}
+
+\be \label{update_Q}
+    \begin{aligned}
+        \Qijt &= p(\Zijt = 1 \mid \theta, \textbf{A}) = p(\Zijt = 1 \mid \theta, \Aijt, \Ajit) \\
+              &= \frac{p(\Zijt=1) p(\Aijt \mid \Zijt=1, \theta) p(\Ajit \mid \Zijt=1, \theta)}
+                  {\sum_{\textbf{Z}} p(\Zijt=1) p(\Aijt \mid \Zijt=1, \theta) p(\Ajit \mid \Zijt=1, \theta)} \\
+              &= \frac{\muij \pois(\Aijt; \lambdaij) \pois(\Ajit; \lambdaji)}{\muij \pois(\Aijt; \lambdaij) \pois(\Ajit; \lambdaji) + (1-\muij) \delta(\Aijt) \delta(\Ajit)}
+    \end{aligned}
+\ee
+
+\newpage
+The complete inference algorithm is summarized below (\Cref{alg:EM})
+%% ------------------------------------------------------ EM-Algorithm ------------------------------------------------------------
+\setlength{\textfloatsep}{5pt}
+	\SetKwInOut{Input}{Input}
+\begin{algorithm}[H]
+ 	\caption{\textbf{EM}}
+	\label{alg:EM}
+	\SetKwInOut{Input}{Input}
+	\setstretch{0.7}
+	\raggedright
+    \BlankLine
+	\Input{network $A \in \Nbb^{N\times N \times T}$ 
+            \\number of affinity communities $K$
+            \\number of exposure communities $\tilde{K}$}
+  	\BlankLine
+	\KwOut{memberships $u,v\in \Rbb^{N \times K}$\\
+          \hspace{1.7cm} network affinity matrix $w\in \Rbb^{K \times K}$\\
+          \hspace{1.7cm} exposure memberships $\mu\in \Rbb^{N \times \tilde{K}}$\\
+          \hspace{1.7cm} posterior estimate $Q \in \Rbb^{N \times N}$ for Z}
+	\BlankLine
+	 Initialize $\theta:(u,v,w), \mu$ at random. 
+	 \BlankLine
+	 Repeat until $\lossfunction$ converges:
+	 \BlankLine
+	\quad 1. Calculate $\rho$ and $Q$ (E-step): 
+	\bea
+	 && \rho_{ijkq} = \frac{u_{i,k} v_{j,q} w_{k,q}}{\sum_{k,q} u_{i,k} v_{j,q} w_{k,q}} \;,\quad \nonumber \\ 
+     && \text{update } \Qijt \text{ \textit{acc.} to \ref{update_Q}}, \nonumber 
+    \nonumber
+	\eea
+    \BlankLine
+	\quad 2. Update parameters $\theta$ (M-step):  
+	\BlankLine
+	\quad \quad \quad \quad 
+		i) for each node $i$ and community $k$ update memberships:
+		\bea
+		\quad  \text{update } u_{ik}  \text{(\textit{acc.} to \ref{update_u})}  \nonumber\\
+	    \quad \text{update } v_{ik}  \text{(\textit{acc.} to \ref{update_v})} \nonumber
+		\eea
+	\quad \quad \quad \quad
+	ii) for each pair of communities $k,q$ update affinity matrix:
+		\be
+		\quad \text{update } w_{kq}  \text{(\textit{acc.} to \ref{update_w})}  \nonumber
+        \nonumber
+		\ee
+	\quad \quad \quad \quad
+		iii) update prior on exposure indicator for each node $i$ and \\
+             \hspace{2.4cm} exposure community $k$:
+		\be \label{eqn:mu}
+		\text{update } \mu_{ik}  \text{(\textit{acc.} to \ref{update_mu})}  \nonumber
+        \nonumber
+		\ee
+		\quad \quad \quad
+
+\end{algorithm}

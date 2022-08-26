@@ -1,0 +1,71 @@
+\section{Introduction}
+
+Networks are a popular and effective representation of large-scale complex systems, 
+encompassing socio-economical relations, the human brain, cell metabolism,
+ecosystems, informational infrastructure, and many more \cite{newman2018networks,newman2003structure}. 
+A network or graph consists of a set of nodes representing distinct entities 
+as well as a set of edges which represent interactions between these entities.
+This basic model is often extended to account for the specific properties of the system at hand.
+For cases in which not only interactions, but also their intensity is observed, weighted networks are used. 
+Networks can be undirected, if interactions are symmetric, or directed if that is not the case.
+Additionally, many real-world systems are not static but evolve over time.
+This can be modeled through temporal networks \cite{masuda2016guide,holme2012temporal}.
+
+To understand the hidden patterns and processes in complex systems, 
+it is helpful to further abstract a complex network structure composed of many microscopic variables into a lower-dimensional representation that coarsens the system. 
+Probabilistic generative models \cite{goldenberg2010survey} are mathematical approaches that aim at doing so by investigating the generative process, 
+\textit{i.e.} how exactly interactions between nodes are taking place, using a set of simplifying assumptions.
+Here, the challenge is to come up with a model that captures reality as accurately as possible 
+while remaing relatively simple. 
+One quite intuitive approach is to suppose that nodes can be grouped into equivalence classes and that interactions between them
+only depend on their class memberships. This assumption is called \textit{Stochastic Equivalence} and lies at the heart of the
+\textit{Stochastic Block Model} (\sbm) \cite{holland1983stochastic}, a popular and flexible probabilistic model for network data. 
+
+As the \sbm\ assumes that nodes can be clustered into groups, it naturally lends itself to the task of community detection. 
+Community detection is an inference task that aims at clustering similar nodes into communities 
+\cite{fortunato2010community, javed2018community, lancichinetti2009community}. 
+Two nodes are considered similar if they interact in a similar way.
+In \Cref{assortative_sbm}, we show a synthetic network generated with a \sbm\ as well as the corresponding adjacency matrix. 
+An adjacency matrix represents a graph as a matrix $A$, such that the entry $\Aij$ models the weight of an edge between nodes $i$ and $j$.
+In the example in \Cref{assortative_sbm}, we can observe an assortative structure \cite{fortunato2016community}, 
+\textit{i.e.} nodes that belong to the same community 
+have a higher likelihood of interacting than nodes that belong to different communities. 
+
+One main property observed in real networks is sparsity, \textit{i.e.} the number of existing interactions is linear in the number of nodes. 
+This means that one observes only a small fraction among the many possible interactions between pairs of nodes.
+For instance, online social networks can contain billions of users, but each user only interacts
+with a tiny fraction of that. The observed non-existing interactions are traditionally attributed to a low affinity between nodes
+(Alice not interacting with Jack implies that Alice does not like Jack).
+However, often the actual reason is not a low affinity, but rather the fact that the two users have never met, 
+\textit{i.e.} never been \textit{exposed} to each other. \Cref{exposure_mechanism} visualizes this exposure mechanism. 
+The idea of exposure has been explored in the context of recommender systems \cite{liang2016modeling,chuklin2015click,wang2016learning,yang2018unbiased}. 
+However, adapting these techniques to social networks is non-trivial and the investigation of this problem is still missing. 
+Nevertheless, it is crucial to do so, as non-existing links contain important information which can only partially be captured 
+
+by existing approaches \cite{ball2011efficient,de2017community,schein2016bayesian,zhao2012consistency}.
+In previous work \cite{static_exp}, we explored the idea of including exposure as an additional binary latent variable to the \sbm.
+This was done for static networks, \textit{i.e.} settings where we only observe one network sample and assume that the network does not change over time. 
+In practice though, many real networks are constantly evolving. 
+This can have dramatic effects in how the exposure mechanism acts in these systems. 
+If exposure models physical proximity and we consider social networks, we can for instance observe that exposure is not static at all. 
+Also, once people are exposed to each other, they are more likely to stay exposed.
+Modelling exposure in a static way fails to take these two observations into account.
+Hence, it is paramount to investigate approaches that model exposure in dynamical settings and to understand its interplay with an underlying community structure. 
+This is the main goal of this project.
+
+To this end we develop two methods, which model exposure in a conceptually very different way. 
+Through link prediction experiments, we obtain that one of them, \expm, 
+is better able to capture the true generative process of social networks than the same model without exposure \cite{de2017community}.
+\expm\ models both exposure as well as affinity through distinct communities.
+We show that seperating these two concepts, which are typically implicitly mixed in traditional models, yields promising inference results.
+
+This rest of this thesis is structured as follows: 
+In chapter \ref{methods}, we provide the theoretical background regarding \sbm s and the exposure mechanism. 
+Then, we introduce two approaches, \expm\ and \exph, that adapt the idea of exposure to a dynamical setting,
+as well as the inference algorithm used to infer the optimal latent variables. 
+The respective derivations are shown in appendix \ref{deriv}.
+In chapter \ref{analysis}, the two methods are evaluated on synthetic and on real data. 
+As real data, we use small temporal social networks collected  in different environments 
+\cite{primaryschool, highschool, hospital, workplace01, workplace02}
+by the \textbf{SocioPatterns} collaboration (\url{http://www.sociopatterns.org}).
+We conclude by analysing the obtained results and by investigating potential avenues for future research.
