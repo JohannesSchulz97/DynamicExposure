@@ -3,9 +3,8 @@ from attrdict import AttrDict
 import timeit
 from tools import *
 
-from scipy.stats import poisson, bernoulli
-from scipy.optimize import root, minimize
-from numpy.linalg import norm
+from scipy.stats import poisson
+from scipy.optimize import root
 
 CONFIG = {   
             'dirichlet': 0.5,
@@ -49,7 +48,6 @@ def posterior(data, Q, lam, mu, eps=1e-5, exp=True):
     posterior = control_well_definedness(Q*np.log(1/Q) + (1-Q)*np.log(1/(1-Q))).sum()
 
     # add part coming from prior on Z 
-    # TODO: implement part coming from prior
     prior = np.log(mu_ij) * Q.sum(axis=0) + np.log(1-mu_ij) * (T - Q.sum(axis=0))
     posterior +=  control_well_definedness(np.tril(prior, -1).sum())
 
@@ -61,65 +59,10 @@ def posterior(data, Q, lam, mu, eps=1e-5, exp=True):
     return posterior
 
 
-def mu_ik_func(mu_ik, i, k, mu, num1, num2, Mu_ij, eps=1e-5):
-    if mu_ik-eps < 0 or mu_ik+eps > 1:
-        return 1000000
-
-    denom1 = mu_ik * mu[:,k] + Mu_ij
-    denom2 = 1-denom1
-
-    A = mu[:,k] * (control_well_definedness(num1/denom1) - control_well_definedness(num2/denom2))
-    return np.delete(A, i).sum()
-
-
-def update_mu(Q, mu, eps=1e-5):
-    T, N, K = Q.shape[0], mu.shape[0], mu.shape[1]
-    num1 = Q.sum(axis=0)
-    num2 = T-num1
-    for k in range(K): 
-        Mu_ij = np.einsum('il,jl->ij', np.delete(mu, k, axis=1), np.delete(mu,k, axis=1))
-        for i in range(N):
-            root_result = root(mu_ik_func, mu[i, k], args=(i,k,mu,num1,num2,Mu_ij[:,i]))
-            mu[i, k] = root_result.x            
-
-    return mu
-
-
-def update_Q(data, lam, mu, symmetric=False): 
-    T = data.shape[0]
-    mu_ij = np.einsum('ik,jk->ij', mu, mu)
-    data_T = data.transpose((0,2,1))
-
-    positive = np.expand_dims(mu_ij, 0) * poisson.pmf(data,[lam]*T)
-    negative = np.expand_dims(1-mu_ij, 0) * (data == 0)
-
-    if not symmetric:
-        positive *= poisson.pmf(data_T,[lam.T]*T)
-        negative *= (data_T == 0)
-
-    return control_well_definedness(positive / (positive + negative))
-
-
-def update_u(QA_sum, Q_sum, rho, v, w):
-    numerator = np.einsum('mjn,mj->mn', rho.sum(axis=3), QA_sum)
-    denominator = np.einsum('jq,nq,mj->mn', v, w, Q_sum)
-    return control_well_definedness(numerator/denominator)
-
-def update_v(QA_sum, Q_sum, rho, u, w):
-    numerator = np.einsum('imn,im->mn', rho.sum(axis=2), QA_sum)
-    denominator = np.einsum('ik,kn,im->mn', u, w, Q_sum)
-    return control_well_definedness(numerator/denominator)
-
-
-def update_w(QA_sum, Q_sum, rho, u, v):
-    numerator = np.einsum('ijmn,ij->mn', rho, QA_sum)
-    denominator = np.einsum('im,jn,ij->mn', u, v, Q_sum)
-    return control_well_definedness(numerator/denominator)
 
 
 """
-the fit function infers the most likely parameters for the latent variables u,v,w,Z and mu
-given time series of adjacency matrices data
+    inference functions with exposure and without exposure
 """
 def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter3=5, exp=True, verbose=False, 
         true_u=None, true_v=None, true_w=None, true_mu=None, true_Z=None,               # these are the true values, they will remain unchanged during inference                     
@@ -298,8 +241,6 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
     return [probabilities, theta_errors, exp_errors], [mu,Q,u,v,w]
 
 
-
-
 def fit_noexp(data, K, seed=42, symmetric=False, iter1=5000):
     true_T = data.shape[0]
     data = np.expand_dims(data.sum(axis=0), 0)
@@ -365,10 +306,64 @@ def fit_noexp(data, K, seed=42, symmetric=False, iter1=5000):
     return [probabilities, theta_errors], [u,v,w]
 
 
+
+'''
+    parameter update functions for mu, Q, rho and theta
+'''
+
+def mu_ik_func(mu_ik, i, k, mu, num1, num2, Mu_ij, eps=1e-5):
+    if mu_ik-eps < 0 or mu_ik+eps > 1:
+        return 1000000
+
+    denom1 = mu_ik * mu[:,k] + Mu_ij
+    denom2 = 1-denom1
+
+    A = mu[:,k] * (control_well_definedness(num1/denom1) - control_well_definedness(num2/denom2))
+    return np.delete(A, i).sum()
+
+def update_mu(Q, mu, eps=1e-5):
+    T, N, K = Q.shape[0], mu.shape[0], mu.shape[1]
+    num1 = Q.sum(axis=0)
+    num2 = T-num1
+    for k in range(K): 
+        Mu_ij = np.einsum('il,jl->ij', np.delete(mu, k, axis=1), np.delete(mu,k, axis=1))
+        for i in range(N):
+            root_result = root(mu_ik_func, mu[i, k], args=(i,k,mu,num1,num2,Mu_ij[:,i]))
+            mu[i, k] = root_result.x            
+
+    return mu
+
+def update_Q(data, lam, mu, symmetric=False): 
+    T = data.shape[0]
+    mu_ij = np.einsum('ik,jk->ij', mu, mu)
+    data_T = data.transpose((0,2,1))
+
+    positive = np.expand_dims(mu_ij, 0) * poisson.pmf(data,[lam]*T)
+    negative = np.expand_dims(1-mu_ij, 0) * (data == 0)
+
+    if not symmetric:
+        positive *= poisson.pmf(data_T,[lam.T]*T)
+        negative *= (data_T == 0)
+
+    return control_well_definedness(positive / (positive + negative))
+
 def update_rho(u,v,w):
     numerator = np.einsum('ik,jq,kq->ijkq', u, v, w)
     denominator = np.expand_dims(np.einsum('ijkq->ij', numerator), (2,3))
     return control_well_definedness(numerator/denominator)
 
+def update_u(QA_sum, Q_sum, rho, v, w):
+    numerator = np.einsum('mjn,mj->mn', rho.sum(axis=3), QA_sum)
+    denominator = np.einsum('jq,nq,mj->mn', v, w, Q_sum)
+    return control_well_definedness(numerator/denominator)
 
+def update_v(QA_sum, Q_sum, rho, u, w):
+    numerator = np.einsum('imn,im->mn', rho.sum(axis=2), QA_sum)
+    denominator = np.einsum('ik,kn,im->mn', u, w, Q_sum)
+    return control_well_definedness(numerator/denominator)
+
+def update_w(QA_sum, Q_sum, rho, u, v):
+    numerator = np.einsum('ijmn,ij->mn', rho, QA_sum)
+    denominator = np.einsum('im,jn,ij->mn', u, v, Q_sum)
+    return control_well_definedness(numerator/denominator)
 
