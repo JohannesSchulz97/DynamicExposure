@@ -1,6 +1,7 @@
 # my files to ignore
 workspace.code-workspace
-
+/data/input/
+/data/output/
 
 
 # Byte-compiled / optimized / DLL files

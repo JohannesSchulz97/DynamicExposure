@@ -10,8 +10,8 @@ def submission_file(args):
     disk = args.disk
     jobs = 0
 
-    in_folder = '../data/input/synth/'
-    out_folder = '../data/output/synth/'
+    in_folder = '../../../../work/jschulz/data/input/synth/'
+    out_folder = '../../../../work/jschulz/data/output/synth/'
     local_in_folder = '../../data/input/synth/'
     input_files = listdir(local_in_folder)
     networks = [file for file in input_files if "csv" in file]
