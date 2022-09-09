@@ -32,7 +32,7 @@ class Network(object):
     RANDOM_SEEDS= [697752728, 4190089612, 1176914559, 3077924848, 315917623, 2544020234,
                     1077758578, 4071300106, 534591752, 3553386411]
 
-    def __init__(self, N=100, K_aff=3, seed=42, dirichlet=1, prob_ratio=0.1, overlapping=1, correlation=1):
+    def __init__(self, N=100, K_aff=3, seed=42, dirichlet=1, prob_ratio=0.1):
         self.random_state = np.random.RandomState(seed) 
 
         self.probability_ratio = prob_ratio         # ratio between probability of in-community and out-community connections

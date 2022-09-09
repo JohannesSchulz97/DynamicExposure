@@ -1,0 +1,27 @@
+executable = /home/jschulz/anaconda3/bin/python 
+request_memory = 8192 
+request_cpus = 1 
+request_disk = 20000
+MaxTime = 5000
+NumRetries = 5
+periodic_hold = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
+periodic_hold_reason = ifThenElse(JobRunCount <= $(NumRetries), "Job runtime exceeded", "Job runtime exceeded, no more retries left")
+periodic_hold_subcode = ifThenElse(JobRunCount <= $(NumRetries), 1, 2)
+periodic_release = ( (JobStatus =?= 5) && (HoldReasonCode =?= 3) && (HoldReasonSubCode =?= 1) )
+job_machine_attrs = Machine
+job_machine_attrs_history_length = 3
+requirements = target.machine =!= MachineAttrMachine1 && target.machine =!= MachineAttrMachine2
+
+
+arguments = main.py --algorithm Exp --file 3077924848_50_9 --in_folder ../../../../work/jschulz/data/input/synth/ --out_folder ../../../../work/jschulz/data/output/synth/ --seed 697752728 --K_exp 9
+error = cluster_info/synth/3077924848_50_9_Exp_697752728.err
+output = cluster_info/synth/3077924848_50_9_Exp_697752728.out
+log = cluster_info/synth/3077924848_50_9_Exp_697752728.log
+queue
+
+arguments = main.py --algorithm NoExp --file 3077924848_50_9 --in_folder ../../../../work/jschulz/data/input/synth/ --out_folder ../../../../work/jschulz/data/output/synth/ --seed 697752728
+error = cluster_info/synth/3077924848_50_9_NoExp_697752728.err
+output = cluster_info/synth/3077924848_50_9_NoExp_697752728.out
+log = cluster_info/synth/3077924848_50_9_NoExp_697752728.log
+queue
+

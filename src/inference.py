@@ -31,9 +31,11 @@ def initialize_latent_variables(N, K_aff, K_exp=None, seed=42, exp=True):
 
     u = random_state.dirichlet(dir * np.ones(K_aff), size=N)
     v = random_state.dirichlet(dir * np.ones(K_aff), size=N)
+
     w = random_state.uniform(0,1, size=(K_aff,K_aff))
     w = np.tril(w) + np.tril(w, -1).T
     np.fill_diagonal(w, w.diagonal()*10)
+    
     if exp==False: 
         return u,v,w
     mu = random_state.dirichlet(dir * np.ones(K_exp), size=N)
