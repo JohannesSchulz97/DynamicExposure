@@ -77,12 +77,12 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
 """
     inference functions with exposure and without exposure
 """
-def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter3=5, exp=True, verbose=False, 
+def fit(data, K_aff, K_exp, seed=42, symmetric=False, triangular_w=False, iter1=1000, iter2=10, iter3=5, exp=True, verbose=False, 
         true_u=None, true_v=None, true_w=None, true_mu=None, true_Z=None,               # these are the true values, they will remain unchanged during inference                     
         initial_u=None, initial_v=None, initial_w=None, initial_mu=None, initial_Q=None):                 # these will be used initially, but updated over time
     
     if not exp: 
-        return fit_noexp(data, K_aff, seed=seed, symmetric=symmetric, iter1=20000)
+        return fit_noexp(data, K_aff, seed=seed, symmetric=symmetric, triangular_w=triangular_w, iter1=20000)
     T, N = data.shape[0], data.shape[1]
     u,v,w,mu = initialize_latent_variables(N, K_aff, K_exp, seed=seed)
 
@@ -168,7 +168,7 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
                     init_time = timeit.default_timer()
                     rho = update_rho(u,v,w)
                     w_new = update_w(QA_sum, Q_sum, rho, u, v)
-                    if symmetric: 
+                    if symmetric and triangular_w: 
                         w_new = np.tril(w_new)
                     if verbose:
                         print(f"updating w took {timeit.default_timer() - init_time} seconds")
@@ -259,7 +259,9 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
         np.fill_diagonal(Q[t], 0)
     return [probabilities, theta_errors, exp_errors], [mu,Q,u,v,w]
 
-def fit_noexp(data, K, seed=42, symmetric=False, iter1=5000, 
+
+
+def fit_noexp(data, K, seed=42, symmetric=False, triangular_w=False, iter1=5000, 
                 true_u=None, true_v=None, true_w=None, 
                 initial_u=None, initial_v=None, initial_w=None):
     true_T = data.shape[0]
@@ -323,7 +325,8 @@ def fit_noexp(data, K, seed=42, symmetric=False, iter1=5000,
             numerator = np.einsum('tij,ijmn->mn', data, rho)
             denominator = T * np.einsum('im,jn->mn', u, v)
             w_new = control_well_definedness(numerator/denominator)
-            #w_new = np.tril(control_well_definedness(numerator/denominator))
+            if triangular_w: 
+                w_new = np.tril(w_new)
             w_error = np.abs(w - w_new).sum() / w.size
             w = w_new
 
