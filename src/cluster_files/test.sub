@@ -13,13 +13,13 @@ job_machine_attrs_history_length = 3
 requirements = target.machine =!= MachineAttrMachine1 && target.machine =!= MachineAttrMachine2
 
 
-arguments = main.py --algorithm Exp --file 3077924848_50_9 --in_folder ../../../../work/jschulz/data/input/synth/ --out_folder ../../../../work/jschulz/data/output/synth/ --seed 697752728 --K_exp 9
+arguments = src/main.py --algorithm Exp --file 3077924848_50_9 --in_folder ../../../../work/jschulz/dynamic_exposure/input/synth/ --out_folder ../../../../work/jschulz/dynamic_exposure/output/synth/ --seed 697752728 --K_exp 9
 error = cluster_info/synth/3077924848_50_9_Exp_697752728.err
 output = cluster_info/synth/3077924848_50_9_Exp_697752728.out
 log = cluster_info/synth/3077924848_50_9_Exp_697752728.log
 queue
 
-arguments = main.py --algorithm NoExp --file 3077924848_50_9 --in_folder ../../../../work/jschulz/data/input/synth/ --out_folder ../../../../work/jschulz/data/output/synth/ --seed 697752728
+arguments = src/main.py --algorithm NoExp --file 3077924848_50_9 --in_folder ../../../../work/jschulz/dynamic_exposure/input/synth/ --out_folder ../../../../work/jschulz/dynamic_exposure/output/synth/ --seed 697752728
 error = cluster_info/synth/3077924848_50_9_NoExp_697752728.err
 output = cluster_info/synth/3077924848_50_9_NoExp_697752728.out
 log = cluster_info/synth/3077924848_50_9_NoExp_697752728.log
