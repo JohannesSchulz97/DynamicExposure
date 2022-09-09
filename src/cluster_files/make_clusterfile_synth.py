@@ -17,7 +17,7 @@ def submission_file(args):
     networks = [file for file in input_files if "csv" in file]
 
 
-    with open('./synth9.sub', mode='w') as f:
+    with open('./synth100.sub', mode='w') as f:
         header = "executable = /home/jschulz/anaconda3/bin/python \n"\
                 f"request_memory = {memory} \n"\
                 f"request_cpus = {cpus} \n"\
@@ -38,7 +38,9 @@ def submission_file(args):
             name = network.removesuffix('.csv')
             parts = name.split("_")
             K_exp = int(parts[2])
-            if K_exp != 9: 
+            T = int(parts[1])
+            # Ts = [5,10,30,50,100]
+            if T != 100: 
                 continue
             for seed in seeds: 
                 job_exp = f"arguments = src/main.py --algorithm Exp" \
