@@ -49,7 +49,7 @@ def submission_file(args):
                         f"output = cluster_info/synth/{name}_Exp_{seed}.out\n" \
                         f"log = cluster_info/synth/{name}_Exp_{seed}.log\n" \
                         f"queue\n\n"
-                job_noexp = f"arguments = main.py --algorithm NoExp" \
+                job_noexp = f"arguments = src/main.py --algorithm NoExp" \
                         f" --file {name}" \
                         f" --in_folder {in_folder} --out_folder {out_folder}" \
                         f" --seed {seed}\n"\
