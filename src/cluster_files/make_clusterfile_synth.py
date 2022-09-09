@@ -40,7 +40,7 @@ def submission_file(args):
             K_exp = int(parts[2])
 
             for seed in seeds: 
-                job_exp = f"arguments = main.py --algorithm Exp" \
+                job_exp = f"arguments = src/main.py --algorithm Exp" \
                         f" --file {name}" \
                         f" --in_folder {in_folder} --out_folder {out_folder}" \
                         f" --seed {seed}"\
