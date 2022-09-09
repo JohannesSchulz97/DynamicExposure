@@ -43,22 +43,22 @@ $\lossfunction$ simplifies, as we only care about the parts which depend on $\th
 \be
     \begin{aligned}
         \lossfunction & \propto \sum_{\textbf{Z}} q(\textbf{Z}) \log p(A \mid Z, \theta) \\
-                      & = \sum_{\textbf{Z}} q(\textbf{Z}) \log \left( \prod_t \prod_{i,j} \delta(\Aijt)^{1-\Zijt} Pois(\Aijt; \lambdaij)^{\Zijt}         \right) \\
-                      & \propto  \sum_{i,j} \sum_t \sum_{\textbf{Z}} q(\textbf{Z}) \Zijt \log(Pois(\Aijt; \lambdaij)) \\
-                      & \overset{\left( \ref{deriv:marginalization} \right)}{=} \sum_{i,j} \sum_t \Qijt \left( \Aijt \log(\lambdaij) - \lambdaij  \right) \quad.
+                      & = \sum_{\textbf{Z}} q(\textbf{Z}) \log \left( \prod_t \prod_{i<j} \delta(\Aijt)^{1-\Zijt} Pois(\Aijt; \lambdaij)^{\Zijt}         \right) \\
+                      & \propto  \sum_{i<j} \sum_t \sum_{\textbf{Z}} q(\textbf{Z}) \Zijt \log(Pois(\Aijt; \lambdaij)) \\
+                      & = \sum_{i<j} \sum_t \Qijt \left( \Aijt \log(\lambdaij) - \lambdaij  \right) \quad.
     \end{aligned}
 \ee
 Now, we can take the derivative of the simplified $\lossfunction$ and set it to zero to obtain the updates on $\theta$.
 As $\log \lambdaij$ is difficult to derive, we use Jensens inequality \cite{mcshane1937jensen} to estimate it. 
 \begin{equation} \label{met:em_loglam}
     \begin{aligned}
-        \log(\lambdaij) &= \log \left( \sum_{k,q} u_{i,k} v_{j,q} w_{k,q} \right) 
-                        \geq \sum_{k,q} \rho_{ijkq} \log \left( \frac{u_{i,k} v_{j,q} w_{k,q}}{\rho_{ijkq}} \right)\quad.
+        \log(\lambdaij) &= \log \left( \sum_{k,q} u_{i,k} u_{j,q} w_{k,q} \right) 
+                        \geq \sum_{k,q} \rho_{ijkq} \log \left( \frac{u_{i,k} u_{j,q} w_{k,q}}{\rho_{ijkq}} \right)\quad.
     \end{aligned}
 \end{equation}
 For 
 \begin{equation} \label{rho}
-    \rho_{ijkq} = \frac{u_{i,k} v_{j,q} w_{k,q}}{\sum_{k,q} u_{i,k} v_{j,q} w_{k,q}}\quad,
+    \rho_{ijkq} = \frac{u_{i,k} u_{j,q} w_{k,q}}{\sum_{k,q} u_{i,k} u_{j,q} w_{k,q}}\quad,
 \end{equation} 
 exact equality is reached. \\
 Now, we apply \textbf{EM} a second time by iterating between 
@@ -66,18 +66,15 @@ updating $\rho_{ijkq}$ according to equation \ref{rho} and updating $\theta$.
 
 
 We show the derivations for $u_{m,n}$.
-However, $v_{m,n}$ and $w_{m,n}$ can be obtained in a similar way:
+However, $w_{m,n}$ can be obtained in a similar way:
 \be \label{update_u}
     \begin{aligned}
-        \frac{\partial}{\partial u_{m,n}} \lossfunction &= \sum_{i,j} \sum_t \Qijt \left( \Aijt \frac{\partial}{\partial u_{m,n}}\log(\lambdaij) - \frac{\partial}{\partial u_{m,n}}\lambdaij  \right) \\
+        \frac{\partial}{\partial u_{m,n}} \lossfunction &= \sum_{i<j} \sum_t \Qijt \left( \Aijt \frac{\partial}{\partial u_{m,n}}\log(\lambdaij) - \frac{\partial}{\partial u_{m,n}}\lambdaij  \right) \\
              & = \sum_{j,t}  Q_{m,j}^{(t)} \left( A_{m,j}^{(t)} \frac{\sum_q \rho_{mjnq}}{u_{mn}} - \sum_q v_{jq} w_{nq}  \right) \mbeq 0 \\
              & \Leftrightarrow u_{m,n} = \frac{\sum_j \sum_q \rho_{mjnq} \sum_t Q_{m,j}^{(t)}  A_{mj}^{(t)}}{\sum_j \sum_q v_{jq} w_{nq} \sum_t Q_{m,j}^{(t)}}\quad,
     \end{aligned}
 \ee
-\begin{equation} \label{update_v}
-    v_{m,n} = \frac{\sum_i \sum_k \rho_{imkn} \sum_t Q_{i,m}^{(t)} A_{im}^{(t)}}
-                   {\sum_i \sum_k u_{ik} w_{kn} \sum_t Q_{i,m}^{(t)}}\quad,
-\end{equation}
+
 \begin{equation} \label{update_w}
     w_{m,n} =\frac{\sum_{ij} \rho_{ijmn} \sum_t Q_{i,j}^{(t)}t A_{ij}^{(t)}}
                   {\sum_{ij} u_{im} v_{jn} \sum_t Q_{i,j}^{(t)} }\quad.
@@ -97,7 +94,7 @@ Again, the parameter updates on $\mu$ can be obtained by computing the derivativ
     \begin{aligned}
         \frac{\partial}{\partial \mu_{k,l}} \lossfunction &= \sum_{i<j} \left( \sum_t \Qijt \right) \frac{\delta_{k,i} \mu_{j,l} + \delta_{k,j}\mu_{i,l}}{\mu_i^T\mu_j} \\ 
                      & \hspace{1.5cm} -\left( T - \sum_t \Qijt \right)  \frac{\delta_{k,i} \mu_{j,l} + \delta_{k,j}\mu_{i,l}}{1-\mu_i^T\mu_j} \\
-                     & = \sum_{i\neq k} \mu_{il} \left(\frac{\sum_t Q_{i,k}^{(t)}}{\mu_{ik}} - \frac{T- \sum_t Q_{i,k}^{(t)}}{1 - \mu_{ik}}\right) \mbeq 0\quad.
+                     & = \sum_{i\neq k} \mu_{il} \left(\frac{\sum_t Q_{i,k}^{(t)}}{\mu_i^T \mu_k} - \frac{T- \sum_t Q_{i,k}^{(t)}}{1 - \mu_i^T \mu_k}\right) \mbeq 0\quad.
     \end{aligned}
 \ee
 
@@ -105,10 +102,10 @@ Again, the parameter updates on $\mu$ can be obtained by computing the derivativ
 
 \be \label{update_Q}
     \begin{aligned}
-        \Qijt &= p(\Zijt = 1 \mid \theta, \textbf{A}) = p(\Zijt = 1 \mid \theta, \Aijt, \Ajit) \\
-              &= \frac{p(\Zijt=1) p(\Aijt \mid \Zijt=1, \theta) p(\Ajit \mid \Zijt=1, \theta)}
-                  {\sum_{\textbf{Z}} p(\Zijt=1) p(\Aijt \mid \Zijt=1, \theta) p(\Ajit \mid \Zijt=1, \theta)} \\
-              &= \frac{\muij \pois(\Aijt; \lambdaij) \pois(\Ajit; \lambdaji)}{\muij \pois(\Aijt; \lambdaij) \pois(\Ajit; \lambdaji) + (1-\muij) \delta(\Aijt) \delta(\Ajit)}
+        \Qijt &= p(\Zijt = 1 \mid \theta, \textbf{A}) = p(\Zijt = 1 \mid \theta, \Aijt) \\
+              &= \frac{p(\Zijt=1) p(\Aijt \mid \Zijt=1, \theta)}
+                  {\sum_{\textbf{Z}} p(\Zijt) p(\Aijt \mid \Zijt, \theta)} \\
+              &= \frac{\muij \pois(\Aijt; \lambdaij)}{\muij \pois(\Aijt; \lambdaij) + (1-\muij) \delta(\Aijt)}
     \end{aligned}
 \ee
 

@@ -30,14 +30,11 @@ def initialize_latent_variables(N, K_aff, K_exp=None, seed=42, exp=True):
     dir = config.dirichlet
 
     u = random_state.dirichlet(dir * np.ones(K_aff), size=N)
-    v = random_state.dirichlet(dir * np.ones(K_aff), size=N)
-    w = random_state.uniform(0,1, size=(K_aff,K_aff))
-    w = np.tril(w) + np.tril(w, -1).T
-    np.fill_diagonal(w, w.diagonal()*10)
+    w = np.ones((K_aff,K_aff))
     if exp==False: 
-        return u,v,w
+        return u,w
     mu = random_state.dirichlet(dir * np.ones(K_exp), size=N)
-    return u,v,w,mu
+    return u,w,mu
 
 def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
     T, N = data.shape[0], data.shape[1]
@@ -49,12 +46,7 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
     posterior = 0
     # add the entropy of Q
     entropy = control_well_definedness(Q*np.log(1/Q) + (1-Q)*np.log(1/(1-Q)))
-
-    
-    if symmetric: 
-        posterior += np.tril(np.sum(entropy, axis=0), -1).sum()
-    else: 
-        posterior += entropy.sum()
+    posterior += np.tril(np.sum(entropy, axis=0), -1).sum()
     
     # add part coming from prior on Z 
     prior = control_well_definedness(np.log(mu_ij) * Q.sum(axis=0) + np.log(1-mu_ij) * (T - Q.sum(axis=0)))
@@ -62,10 +54,7 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
 
     # add part coming from likelihood
     likelihood = Q * (data * np.log(lam+eps) + lam)
-    if symmetric: 
-        posterior += np.tril(likelihood.sum(axis=0), -1).sum()
-    else: 
-        posterior += likelihood.sum()
+    posterior += np.tril(likelihood.sum(axis=0), -1).sum()
 
     # 'normalize' posterior to so that it lies in the same range for different N and T
     posterior /= T*N**2
@@ -77,19 +66,17 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
 """
     inference functions with exposure and without exposure
 """
-def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter3=5, exp=True, verbose=False, 
-        true_u=None, true_v=None, true_w=None, true_mu=None, true_Z=None,               # these are the true values, they will remain unchanged during inference                     
-        initial_u=None, initial_v=None, initial_w=None, initial_mu=None, initial_Q=None):                 # these will be used initially, but updated over time
+def fit(data, K_aff, K_exp, seed=42, iter1=1000, iter2=10, iter3=5, exp=True, verbose=False, 
+        true_u=None, true_w=None, true_mu=None, true_Z=None,               # these are the true values, they will remain unchanged during inference                     
+        initial_u=None, initial_w=None, initial_mu=None, initial_Q=None):                 # these will be used initially, but updated over time
     
     if not exp: 
-        return fit_noexp(data, K_aff, seed=seed, symmetric=symmetric, iter1=20000)
+        return fit_noexp(data, K_aff, seed=seed, iter1=20000)
     T, N = data.shape[0], data.shape[1]
-    u,v,w,mu = initialize_latent_variables(N, K_aff, K_exp, seed=seed)
+    u,w,mu = initialize_latent_variables(N, K_aff, K_exp, seed=seed)
 
     if initial_u is not None: 
         u=initial_u
-    if initial_v is not None: 
-        v=initial_v
     if initial_w is not None: 
         w=initial_w
     if initial_mu is not None: 
@@ -99,8 +86,6 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
 
     if true_u is not None: 
         u=true_u
-    if true_v is not None: 
-        v=true_v
     if true_w is not None: 
         w=true_w
     if true_mu is not None: 
@@ -108,20 +93,21 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
     if true_Z is not None: 
         Q=true_Z
 
-    lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), v) 
+    lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, np.tril(w)), u) 
+    assert(np.all(w == w.T)), w
+    assert(np.all(lam == lam.T)), lam
 
     changing_u = (true_u is None)
-    changing_v = (true_v is None)
     changing_w = (true_w is None)
     changing_mu = (true_mu is None)
     changing_Q = (true_Z is None)
 
     if changing_Q: 
-        Q = update_Q(data, lam, mu, symmetric=symmetric)
+        Q = update_Q(data, lam, mu)
 
-    update_theta = changing_u or changing_v or changing_w
+    update_theta = changing_u or changing_w
     changing_exp = changing_Q or changing_mu
-    u_error, v_error, w_error, mu_error, Q_error = 0,0,0,0,0
+    u_error, w_error, mu_error, Q_error = 0,0,0,0
     
     probabilities = []
     theta_errors = []
@@ -143,44 +129,26 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
                 if changing_u: 
                     init_time = timeit.default_timer()
                     rho = update_rho(u,v,w)
-                    '''
-                    if symmetric
-                    assert(rho.transpose((1,0,3,2)))
-                    '''
                     u_new = update_u(QA_sum, Q_sum, rho, v, w)
                     if verbose:
                         print(f"updating u took {timeit.default_timer() - init_time} seconds")
                     u_error = np.abs(u - u_new).sum() / u.size
                     u = u_new
-                if changing_v: 
-                    if symmetric: 
-                        v = u.copy()
-                        v_error = u_error
-                    else:
-                        init_time = timeit.default_timer()
-                        rho = update_rho(u,v,w)
-                        v_new = update_v(QA_sum, Q_sum, rho, u, w)
-                        if verbose:
-                            print(f"updating v took {timeit.default_timer() - init_time} seconds")
-                        v_error = np.abs(v - v_new).sum() / v.size
-                        v = v_new
                 if changing_w: 
                     init_time = timeit.default_timer()
                     rho = update_rho(u,v,w)
-                    w_new = update_w(QA_sum, Q_sum, rho, u, v)
-                    if symmetric: 
-                        w_new = np.tril(w_new)
+                    w_new = update_w(QA_sum, Q_sum, rho, u)
                     if verbose:
                         print(f"updating w took {timeit.default_timer() - init_time} seconds")
                     w_error = np.abs(w - w_new).sum() / w.size
                     w = w_new
                 
-                theta_error = (u_error + v_error + w_error) / (changing_u + changing_v + changing_w)
+                theta_error = (u_error + w_error) / (changing_u + changing_w)
                 theta_errors.append(theta_error)
                 iterations += 1
                 if (iterations % 10) == 0:
                     init_time = timeit.default_timer()
-                    lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), v)
+                    lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), u)
                     p = posterior(data, Q, lam, mu, symmetric=symmetric)
                     probabilities.append(p)
                     if verbose:
@@ -204,7 +172,7 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
                     mu = mu_new
                 if changing_Q: 
                     init_time = timeit.default_timer()
-                    Q_new = update_Q(data, lam, mu, symmetric=symmetric)
+                    Q_new = update_Q(data, lam, mu)
                     if verbose:
                         print(f"updating Q took {timeit.default_timer() - init_time} seconds")
                     Q_error = np.abs(Q - Q_new).sum() / Q.size
@@ -214,7 +182,7 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
                 iterations += 1
                 if (iterations % 10) == 0:
                     init_time = timeit.default_timer()
-                    lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), v)
+                    lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), u)
                     p = posterior(data, Q, lam, mu, symmetric=symmetric)
                     probabilities.append(p)
                     if verbose:
@@ -257,88 +225,48 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, iter1=1000, iter2=10, iter
     
     for t in range(T): 
         np.fill_diagonal(Q[t], 0)
-    return [probabilities, theta_errors, exp_errors], [mu,Q,u,v,w]
+    return [probabilities, theta_errors, exp_errors], [mu,Q,u,w]
 
-def fit_noexp(data, K, seed=42, symmetric=False, iter1=5000, 
-                true_u=None, true_v=None, true_w=None, 
-                initial_u=None, initial_v=None, initial_w=None):
+def fit_noexp(data, K, seed=42, iter1=5000):
     true_T = data.shape[0]
     data = np.expand_dims(data.sum(axis=0), 0)
     T, N = data.shape[0], data.shape[1]
-    u,v,w = initialize_latent_variables(N, K, seed=seed, exp=False)
-    
-    if initial_u is not None: 
-        u=initial_u
-    if initial_v is not None: 
-        v=initial_v
-    if initial_w is not None: 
-        w=initial_w
-
-    if true_u is not None: 
-        u=true_u
-    if true_v is not None: 
-        v=true_v
-    if true_w is not None: 
-        w=true_w
-
-    changing_u = (true_u is None)
-    changing_v = (true_v is None)
-    changing_w = (true_w is None)
-    u_error, v_error, w_error = 0,0,0
-
-    if symmetric: 
-        v = u.copy()
+    u,w = initialize_latent_variables(N, K, seed=seed, exp=False)
     probabilities = []
     theta_errors = []
     start_time = timeit.default_timer()
     iterations = 0
-    print(f"running NoExp inference for {iter1} iterations: \n")
+    print(f"running NoExp symmetric inference for {iter1} iterations: \n")
     for i in range(iter1): 
         
         # update u
-        if changing_u: 
-            rho = update_rho(u,v,w)
-            numerator = np.einsum('tmj,mjnq->mn', data, rho)
-            denominator= T * np.einsum('jq,nq->n', v, w)
-            u_new = control_well_definedness(numerator/denominator)
-            u_error = np.abs(u - u_new).sum() / u.size
-            u = u_new
-     
-        # update v
-        if changing_v: 
-            if symmetric:
-                v = u.copy()
-                v_error = u_error
-            else: 
-                rho = update_rho(u,v,w)
-                numerator = np.einsum('tim,imkn->mn', data, rho)
-                denominator = T * np.einsum('ik,kn->n', u, w)
-                v_new = control_well_definedness(numerator/denominator)
-                v_error = np.abs(v - v_new).sum() / v.size
-                v = v_new
+        rho = update_rho(u,w)
+        numerator = np.einsum('tmj,mjnq->mn', data, rho)
+        denominator= T * np.einsum('jq,nq->n', u, w)
+        u_new = control_well_definedness(numerator/denominator)
+        u_error = np.abs(u - u_new).sum() / u.size
+        u = u_new
 
-        if changing_w:
-            # update w
-            rho = update_rho(u,v,w)
-            numerator = np.einsum('tij,ijmn->mn', data, rho)
-            denominator = T * np.einsum('im,jn->mn', u, v)
-            w_new = control_well_definedness(numerator/denominator)
-            #w_new = np.tril(control_well_definedness(numerator/denominator))
-            w_error = np.abs(w - w_new).sum() / w.size
-            w = w_new
+        # update w
+        rho = update_rho(u,w)
+        numerator = np.einsum('tij,ijmn->mn', data, rho)
+        denominator = T * np.einsum('im,jn->mn', u, u)
+        w_new = np.tril(control_well_definedness(numerator/denominator))
+        w_error = np.abs(w - w_new).sum() / w.size
+        w = w_new
 
         '''
-        print(f"iteration {i}:\n u={u[0]},\n v={v[0]}, \n w={w}\n\n")
+        print(f"iteration {i}:\n u={u[0]},\n w={w}\n\n")
         if i == 2: 
             return
-        '''    
+        '''
 
-        theta_error = (u_error + v_error + w_error) / 3
+        theta_error = (u_error + w_error) / 2
         theta_errors.append(theta_error)
         
         iterations += 1
         if (iterations % 10) == 0:
-            lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), v)         
+            lam = np.einsum('iq, jq -> ij', np.einsum('ik, kq -> iq', u, w), u)         
             p = posterior(data, None, lam, None, exp=False)
             probabilities.append(p)
             
@@ -358,7 +286,7 @@ def fit_noexp(data, K, seed=42, symmetric=False, iter1=5000,
     elapsed = timeit.default_timer() - start_time
 
     print(f"No exposure inference with T={true_T}, N={N}, K={K} and {iterations} iterations took {elapsed} seconds\n")  
-    return [probabilities, theta_errors], [u,v,w]
+    return [probabilities, theta_errors], [u,w]
 
 
 
@@ -385,24 +313,20 @@ def update_mu(Q, mu):
         for i in range(N):
             root_result = root(mu_ik_func, mu[i, k], args=(i,k,mu,num1,num2,Mu_ij[:,i]))
             mu[i, k] = root_result.x            
+
     return mu
 
-def update_Q(data, lam, mu, symmetric=False): 
+def update_Q(data, lam, mu): 
     T = data.shape[0]
     mu_ij = np.einsum('ik,jk->ij', mu, mu)
-    data_T = data.transpose((0,2,1))
 
-    positive = np.expand_dims(mu_ij, 0) * poisson.pmf(data,[lam]*T) #* poisson.pmf(data_T,[lam.T]*T)
-    negative = np.expand_dims(1-mu_ij, 0) * (data == 0) #* (data_T == 0)
-
-    if not symmetric:
-        positive *= poisson.pmf(data_T,[lam.T]*T)
-        negative *= (data_T == 0)
+    positive = np.expand_dims(mu_ij, 0) * poisson.pmf(data,[lam]*T) 
+    negative = np.expand_dims(1-mu_ij, 0) * (data == 0) 
 
     return control_well_definedness(positive / (positive + negative))
 
-def update_rho(u,v,w):
-    numerator = np.einsum('ik,jq,kq->ijkq', u, v, w)
+def update_rho(u,w):
+    numerator = np.einsum('ik,jq,kq->ijkq', u, u, w)
     denominator = np.expand_dims(np.einsum('ijkq->ij', numerator), (2,3))
     return control_well_definedness(numerator/denominator)
 
@@ -411,13 +335,7 @@ def update_u(QA_sum, Q_sum, rho, v, w):
     denominator = np.einsum('jq,nq,mj->mn', v, w, Q_sum)
     return control_well_definedness(numerator/denominator)
 
-def update_v(QA_sum, Q_sum, rho, u, w):
-    numerator = np.einsum('imn,im->mn', rho.sum(axis=2), QA_sum)
-    denominator = np.einsum('ik,kn,im->mn', u, w, Q_sum)
-    return control_well_definedness(numerator/denominator)
-
-def update_w(QA_sum, Q_sum, rho, u, v):
+def update_w(QA_sum, Q_sum, rho, u):
     numerator = np.einsum('ijmn,ij->mn', rho, QA_sum)
-    denominator = np.einsum('im,jn,ij->mn', u, v, Q_sum)
-    return control_well_definedness(numerator/denominator)
-
+    denominator = np.einsum('im,jn,ij->mn', u, u, Q_sum)
+    return np.tril(control_well_definedness(numerator/denominator))

@@ -258,8 +258,6 @@ INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy7.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy5.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/latex-fonts/lasyb10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
-INPUT /home/jschulz/DynamicExposure/paper/abstract.tex
-INPUT /home/jschulz/DynamicExposure/paper/abstract.tex
 INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
 INPUT /home/jschulz/DynamicExposure/paper/methods.tex
 INPUT /home/jschulz/DynamicExposure/paper/methods.tex
@@ -271,7 +269,6 @@ INPUT /home/jschulz/DynamicExposure/paper/inference.tex
 INPUT /home/jschulz/DynamicExposure/paper/paper.aux
 INPUT /home/jschulz/DynamicExposure/paper/paper.out
 INPUT /home/jschulz/DynamicExposure/paper/paper.out
-INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb

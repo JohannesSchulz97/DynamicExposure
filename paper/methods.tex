@@ -1,7 +1,8 @@
 \section{Methods}
 For temporal networks, we model exposure dynamically. 
 We choose a simple setting in which the probability of exposure is \textit{i.i.d.} in time, but varies 
-between node pairs. 
+between node pairs. For simplicity, all derivations are done undirected networks. 
+However, this can easily be extended to directed networks if need be. 
 Additionally, in previous work the exposure prior was quite weak as the propensity to be exposed for node $i$ is the same for each node $j$
 it could be exposed to. Here, we increase the expressiveness of $\mu$ by making it a $\tilde{K}$-dimensional vector. 
 As is the case with $u$ and $v$, $\mu$ can be interpreted as a mixed membership community vector, $\textit{i.e.}$
@@ -21,6 +22,6 @@ of $i$ and $j$.
 Analogously to the static model, we choose the likelihood as:
 \begin{equation}
     \begin{aligned}
-        p(\textbf{A} \mid \theta, \textbf{Z}) = \prod_t \prod_{i,j} Pois(\Aijt ; \lambdaij)^{\Zijt} \delta(\Aijt)^{(1-\Zijt)}\quad.
+        p(\textbf{A} \mid \theta, \textbf{Z}) = \prod_t \prod_{i<j} Pois(\Aijt ; \lambdaij)^{\Zijt} \delta(\Aijt)^{(1-\Zijt)}\quad.
     \end{aligned}      
 \end{equation}

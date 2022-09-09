@@ -52,6 +52,9 @@ class Network(object):
 
     def get_u(self): 
         return self.u
+        
+    def get_v(self): 
+        return self.v
 
     def get_w(self): 
         return self.w
@@ -107,14 +110,17 @@ class Network(object):
     """
         create symmetric adjacency matrix before applying exposure 
     """
-    def generate_A0(self, T, avg_degree):
+    def generate_A0(self, T, avg_degree, symmetric=False):
         self.adjust_for_avg_degree(avg_degree=avg_degree)
         data = self.random_state.poisson([self.lam]*T)
         """
             make A0 symmetric and set diagonal to zero
         """
+         
         for t in range(T): 
-            data[t] = np.triu(data[t],1) + np.triu(data[t], 1).T
+            np.fill_diagonal(data[t],0)
+            if symmetric:
+                data[t] = np.triu(data[t],1) + np.triu(data[t], 1).T
 
         return data
 
