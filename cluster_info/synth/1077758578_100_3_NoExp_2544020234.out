@@ -1,0 +1,6 @@
+Running NoExp Inference with test-fold=None, seed=2544020234, K_aff=3 and K_exp=3
+running NoExp inference for 20000 iterations: 
+
+Convergence Criterium satisfied
+No exposure inference with T=100, N=100, K=3 and 7820 iterations took 37.45541408204008 seconds
+

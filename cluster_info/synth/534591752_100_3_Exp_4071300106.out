@@ -1,0 +1,5 @@
+Running Exp Inference with test-fold=None, seed=4071300106, K_aff=3 and K_exp=3
+running Exp inference for 15000 iterations: 
+
+Exposure inference with T=100, N=100, K=3 and 11490 iterations took 756.525621348992 seconds
+
