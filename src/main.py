@@ -51,7 +51,6 @@ def main(args):
         [u_est, v_est, w_est] = params
         np.savez(out_folder + "params_" + file, u=u_est, v=v_est, w=w_est)
         np.savez(out_folder + "training_" + file, losses=losses, theta_errors=theta_errors)
-    write_training(out_folder, file, losses, theta_errors, exp_errors, exp=exp)
 
 
 
