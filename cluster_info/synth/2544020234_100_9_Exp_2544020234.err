@@ -1,0 +1,20 @@
+/lustre/home/jschulz/DynamicExposure/src/inference.py:53: RuntimeWarning: divide by zero encountered in true_divide
+  entropy = control_well_definedness(Q*np.log(1/Q) + (1-Q)*np.log(1/(1-Q)))
+/lustre/home/jschulz/DynamicExposure/src/inference.py:53: RuntimeWarning: invalid value encountered in multiply
+  entropy = control_well_definedness(Q*np.log(1/Q) + (1-Q)*np.log(1/(1-Q)))
+/lustre/home/jschulz/DynamicExposure/src/inference.py:53: RuntimeWarning: invalid value encountered in log
+  entropy = control_well_definedness(Q*np.log(1/Q) + (1-Q)*np.log(1/(1-Q)))
+/lustre/home/jschulz/DynamicExposure/src/inference.py:62: RuntimeWarning: invalid value encountered in log
+  prior = control_well_definedness(np.log(mu_ij) * Q.sum(axis=0) + np.log(1-mu_ij) * (T - Q.sum(axis=0)))
+/lustre/home/jschulz/DynamicExposure/src/inference.py:66: RuntimeWarning: invalid value encountered in log
+  likelihood = Q * (data * np.log(lam+eps) + lam)
+/lustre/home/jschulz/DynamicExposure/src/inference.py:407: RuntimeWarning: invalid value encountered in true_divide
+  return control_well_definedness(positive / (positive + negative))
+/lustre/home/jschulz/DynamicExposure/src/inference.py:417: RuntimeWarning: invalid value encountered in true_divide
+  return control_well_definedness(numerator/denominator)
+/lustre/home/jschulz/DynamicExposure/src/inference.py:412: RuntimeWarning: invalid value encountered in true_divide
+  return control_well_definedness(numerator/denominator)
+/lustre/home/jschulz/DynamicExposure/src/inference.py:422: RuntimeWarning: invalid value encountered in true_divide
+  return control_well_definedness(numerator/denominator)
+/lustre/home/jschulz/DynamicExposure/src/inference.py:53: RuntimeWarning: overflow encountered in true_divide
+  entropy = control_well_definedness(Q*np.log(1/Q) + (1-Q)*np.log(1/(1-Q)))

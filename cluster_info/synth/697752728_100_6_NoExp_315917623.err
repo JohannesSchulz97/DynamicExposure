@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/lustre/home/jschulz/DynamicExposure/src/main.py", line 77, in <module>
+    main(args)
+  File "/lustre/home/jschulz/DynamicExposure/src/main.py", line 54, in main
+    write_training(out_folder, file, losses, theta_errors, exp_errors, exp=exp)
+UnboundLocalError: local variable 'exp_errors' referenced before assignment

@@ -1,0 +1,6 @@
+Running Exp Inference with test-fold=None, seed=1077758578, K_aff=3 and K_exp=3
+running Exp inference for 15000 iterations: 
+
+Convergence Criterium satisfied
+Exposure inference with T=100, N=100, K=3 and 5528 iterations took 261.43540605099406 seconds
+
