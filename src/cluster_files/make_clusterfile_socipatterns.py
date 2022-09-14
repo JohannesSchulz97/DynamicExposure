@@ -58,9 +58,9 @@ def submission_file(args):
                                 f" --seed {seed}"\
                                 f" --K_aff {K_aff}"\
                                 f" --fold {fold}\n"\
-                                f"error = cluster_info/sociopatterns/{dataset}/Exp_{seed}_{fold}_{K_aff}.err\n" \
-                                f"output = cluster_info/sociopatterns/{dataset}/Exp_{seed}_{fold}_{K_aff}.out\n" \
-                                f"log = cluster_info/sociopatterns/{dataset}/Exp_{seed}_{fold}_{K_aff}.log\n" \
+                                f"error = cluster_info/sociopatterns/{dataset}/NoExp_{seed}_{fold}_{K_aff}.err\n" \
+                                f"output = cluster_info/sociopatterns/{dataset}/NoExp_{seed}_{fold}_{K_aff}.out\n" \
+                                f"log = cluster_info/sociopatterns/{dataset}/NoExp_{seed}_{fold}_{K_aff}.log\n" \
                                 f"queue\n\n"
 
                         f.write(job_exp)
