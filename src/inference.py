@@ -46,7 +46,7 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
     if not exp: 
         return (data * np.log(lam+eps)- T*lam).sum()
 
-    mu_ij = np.einsum('ik,jk->ij', mu, mu)
+    mu_ij = np.clip(np.einsum('ik,jk->ij', mu, mu), 0, 1-1e-5)
 
     posterior = 0
     # add the entropy of Q
@@ -63,7 +63,9 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
     posterior += np.tril(prior, -1).sum()
 
     # add part coming from likelihood
+    
     likelihood = Q * (data * np.log(lam+eps) + lam)
+    
     if symmetric: 
         posterior += np.tril(likelihood.sum(axis=0), -1).sum()
     else: 
@@ -394,7 +396,7 @@ def update_mu(Q, mu):
 
 def update_Q(data, lam, mu, symmetric=False): 
     T = data.shape[0]
-    mu_ij = np.einsum('ik,jk->ij', mu, mu)
+    mu_ij = np.clip(np.einsum('ik,jk->ij', mu, mu), 0, 1-1e-5)
     data_T = data.transpose((0,2,1))
 
     positive = np.expand_dims(mu_ij, 0) * poisson.pmf(data,[lam]*T) #* poisson.pmf(data_T,[lam.T]*T)

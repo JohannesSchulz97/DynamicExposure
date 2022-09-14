@@ -43,7 +43,7 @@ def submission_file(args):
             if T != 100: 
                 continue
             for seed in seeds: 
-                job_exp = f"arguments = src/main.py --algorithm Exp" \
+                job_exp = f"arguments = src/main_synth.py --algorithm Exp" \
                         f" --file {name}" \
                         f" --in_folder {in_folder} --out_folder {out_folder}" \
                         f" --seed {seed}"\
