@@ -53,7 +53,7 @@ def submission_file(args):
                                 f"output = cluster_info/sociopatterns/{dataset}/Exp_{seed}_{fold}_{K_aff}.out\n" \
                                 f"log = cluster_info/sociopatterns/{dataset}/Exp_{seed}_{fold}_{K_aff}.log\n" \
                                 f"queue\n\n"
-                        job_noexp = f"arguments = src/main.py --algorithm NoExp" \
+                        job_noexp = f"arguments = src/main_sociopatterns.py --algorithm NoExp" \
                                 f" --in_folder {in_folder} --out_folder {out_folder}" \
                                 f" --seed {seed}"\
                                 f" --K_aff {K_aff}"\
