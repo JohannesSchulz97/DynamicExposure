@@ -39,7 +39,7 @@ def main(args):
         data = np.round(np.sqrt(data))
 
 
-    losses, params = fit(data, K_aff=K_aff, K_exp=K_exp, seed=seed, exp=exp, iter1=100)
+    losses, params = fit(data, K_aff=K_aff, K_exp=K_exp, seed=seed, exp=exp)
     if exp:        
         [mu_est, Q, u_est, v_est, w_est] = params 
         [losses, theta_errors, exp_errors] = losses
