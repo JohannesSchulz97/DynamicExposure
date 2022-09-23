@@ -46,7 +46,16 @@ def posterior(data, Q, lam, mu, eps=1e-5, symmetric=True, exp=True):
     if not exp: 
         return (data * np.log(lam+eps)- T*lam).sum()
 
-    mu_ij = np.clip(np.einsum('ik,jk->ij', mu, mu), 0, 1-1e-5)
+
+    mu_ij = np.einsum('ik,jk->ij', mu, mu)
+    '''
+        two approaches to handle values of mu_ij >= 1
+        - clipping
+        - rescaling, preserves order of values
+    '''
+    #mu_ij = np.clip(mu_ij, 0, 1-1e-10)
+    if np.max(mu_ij) >=1: 
+        mu_ij /= np.max(mu_ij) + 1e-10
 
     posterior = 0
     # add the entropy of Q
@@ -86,7 +95,7 @@ def fit(data, K_aff, K_exp, seed=42, symmetric=False, triangular_w=False, iter1=
         initial_u=None, initial_v=None, initial_w=None, initial_mu=None, initial_Q=None):                 # these will be used initially, but updated over time
     
     if not exp: 
-        return fit_noexp(data, K_aff, seed=seed, symmetric=symmetric, triangular_w=triangular_w, iter1=20000)
+        return fit_noexp(data, K_aff, seed=seed, symmetric=symmetric, triangular_w=triangular_w, true_u=true_u, true_v=true_v, true_w=true_w, initial_u=initial_u, initial_v=initial_v, initial_w=initial_w, iter1=20000)
     T, N = data.shape[0], data.shape[1]
     u,v,w,mu = initialize_latent_variables(N, K_aff, K_exp, seed=seed)
 
@@ -357,7 +366,7 @@ def fit_noexp(data, K, seed=42, symmetric=False, triangular_w=False, iter1=5000,
             break
 
         """
-            terminate automatically after 20000 iterations
+            terminate automatically after 10000 iterations
         """
         if iterations > 10000: 
             break
@@ -391,12 +400,21 @@ def update_mu(Q, mu):
         Mu_ij = np.einsum('il,jl->ij', np.delete(mu, k, axis=1), np.delete(mu,k, axis=1))
         for i in range(N):
             root_result = root(mu_ik_func, mu[i, k], args=(i,k,mu,num1,num2,Mu_ij[:,i]))
-            mu[i, k] = root_result.x            
+            mu[i, k] = np.clip(root_result.x, 0+1e-10, 1-1e-10)            
     return mu
 
 def update_Q(data, lam, mu, symmetric=False): 
     T = data.shape[0]
-    mu_ij = np.clip(np.einsum('ik,jk->ij', mu, mu), 0, 1-1e-5)
+    mu_ij = np.einsum('ik,jk->ij', mu, mu)
+    '''
+        two approaches to handle values of mu_ij >= 1
+        - clipping
+        - rescaling, preserves order of values
+    '''
+    # mu_ij = np.clip(mu_ij, 0, 1-1e-10)
+    if np.max(mu_ij) >=1: 
+        mu_ij /= np.max(mu_ij) + 1e-10
+
     data_T = data.transpose((0,2,1))
 
     positive = np.expand_dims(mu_ij, 0) * poisson.pmf(data,[lam]*T) #* poisson.pmf(data_T,[lam.T]*T)

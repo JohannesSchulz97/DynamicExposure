@@ -4,30 +4,6 @@ import sys
 
 class Network(object):
 
-    '''
-        relevant parameters: 
-        - dirichlet             # the lower the more peaked the distribution. 
-                                This implies fewer mixed community membership vectors, i.e. problem is harder for higher values
-        - seed                  # the seed of the random number generator for reproducibility
-        - probability_ratio     # ratio between probability of in-community and out-community links
-        - overlapping           # ratio of nodes with mixed community memberships
-        - correlation           # correlation between membership vector u and membership vector v
-        - N
-        - K
-        - structure             # at the moment assortative or disassortative
-
-
-        Configurations for the synthetic experiments: 
-        - avg_degree = 100
-        - T = [30, 100, 300]
-        - N = 100
-        - K = 3
-        - dirichlet = 1
-        - prob_ratio = 0.1
-        - seed = [10 different random integer seeds]
-        - correlation = 1
-        - overlapping = 1
-    '''
 
     RANDOM_SEEDS= [697752728, 4190089612, 1176914559, 3077924848, 315917623, 2544020234,
                     1077758578, 4071300106, 534591752, 3553386411]
