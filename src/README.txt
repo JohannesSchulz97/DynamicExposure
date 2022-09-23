@@ -1,3 +1,7 @@
+tests Folder: 
+- contains comparison notebooks between symmetric and asymmetric inference for Exp and NoExp
+
+
 Python Source Files: 
 
 inference.py: 
@@ -29,3 +33,6 @@ analysis_synth.ipynb
 
 analysis_sociopatterns.ipynb
 - analysis on workplace01 dataset
+
+debugging.ipynb
+- debugging of results on synthetic experiments, especially the strange losscurves observed in the beginning
